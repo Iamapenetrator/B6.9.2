@@ -1,0 +1,33 @@
+---
+
+- hosts: remote
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    user_name: user1
+
+  tasks:
+
+    - name: "Create group"
+      group:
+        name: superusers
+        state: present
+
+    - name: "Create users"
+      user:
+        name: "{{ item }}"
+        password: "{{ '12345678' | password_hash('sha512') }}"
+        shell: /bin/bash
+        create_home: yes
+        groups: superusers
+        append: yes
+      loop:
+        - user2
+        - user3
+
+    - name: Insert setting to sudoers file
+      lineinfile:
+        path: "/etc/sudoers"
+        line: '%superusers   ALL=(ALL:ALL) ALL'
+        validate: /usr/sbin/visudo -cf %s

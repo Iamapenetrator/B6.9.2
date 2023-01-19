@@ -1,0 +1,41 @@
+---
+# tasks file for dnsmasq
+
+
+- name: "Install {{ pkg_name }}"
+  package:
+    name: "{{ pkg_name }}"
+    state: present
+
+- name: "Disabled systemd for systemd-resolved unit"
+  systemd:
+    name: systemd-resolved
+    enabled: false
+    state: stopped
+
+- name: "Setting systemd for {{ pkg_name }} unit"
+  systemd:
+    name: "{{ pkg_name }}"
+    enabled: yes
+    state: started
+
+- name: Allow firewall ports
+  iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: 53
+    jump: ACCEPT
+
+- name: Setting {{ pkg_name }} to resolve mail.ru over yandex DNS
+  copy:
+    src: files/mail-over-yandex
+    dest: /etc/dnsmasq.d/
+  notify:
+    - "{{ pkg_name }} reload"
+
+- name: Setting {{ pkg_name }} to cache resolve
+  copy:
+    src: files/cache
+    dest: /etc/dnsmasq.d/
+  notify:
+    - "{{ pkg_name }} reload"

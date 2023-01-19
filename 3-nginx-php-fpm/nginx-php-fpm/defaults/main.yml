@@ -1,0 +1,5 @@
+---
+# defaults file for nginx-php-fpm
+
+php_version: 7.4
+document_root: /opt/nginx/ansible

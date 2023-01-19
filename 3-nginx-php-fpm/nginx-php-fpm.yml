@@ -1,0 +1,9 @@
+---
+  
+- hosts: remote
+  become: true
+  become_method: sudo
+  become_user: root
+
+  roles:
+    - nginx-php-fpm

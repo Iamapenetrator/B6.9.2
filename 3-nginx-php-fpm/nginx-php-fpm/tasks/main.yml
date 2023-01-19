@@ -1,0 +1,57 @@
+---
+# tasks file for nginx-php-fpm
+
+- name: "Install PHP {{ php_version }} PPA Repo"
+  apt_repository:
+    repo: 'ppa:ondrej/php'
+
+- name: Install Packages for Web Server
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - nginx
+    - php{{ php_version }}
+    - php{{ php_version }}-fpm
+
+- name: nginx start
+  systemd:
+    name: nginx
+    enabled: yes
+    state: started
+  loop:
+    - nginx
+    - php{{ php_version }}-fpm
+
+- name: Allow firewall ports
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop:
+    - "80"
+    - "443"
+
+- name: DocumentRoot Folder
+  file:
+    path: "{{ document_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0755
+
+- name: Index file to DocumentRoot
+  copy:
+    src: files/index.php
+    dest: "{{ document_root }}"
+    mode: 0644
+    owner: www-data
+    group: www-data
+
+- name: Config for NGINX
+  template:
+    src: templates/default.j2
+    dest: /etc/nginx/sites-enabled/default
+  notify:
+    - nginx reload
